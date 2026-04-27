@@ -175,8 +175,9 @@ export function SnakeGame() {
 
       {/* Game Board Container */}
       <div 
-        className={`glitch-border bg-black border-4 w-full p-2
-          ${gameOver ? 'border-magenta-vhs screen-tear' : 'border-cyan-vhs'}`}
+        className={`glitch-border bg-black border-4 w-full p-2 transition-transform
+          ${gameOver ? 'border-magenta-vhs screen-tear' : 'border-cyan-vhs'} 
+          ${isEating ? 'animate-eat' : ''}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -186,23 +187,33 @@ export function SnakeGame() {
             gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))`,
             width: '100%',
             aspectRatio: '1/1',
-            backgroundImage: 'linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgba(0,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.05) 1px, transparent 1px)',
             backgroundSize: `calc(100% / ${GRID_SIZE}) calc(100% / ${GRID_SIZE})`
           }}
         >
           {/* Render Snake */}
           {snake.map((segment, index) => {
             const isHead = index === 0;
+            const opacity = isHead ? 1 : Math.max(0.4, 1 - (index * 0.05));
+            const glowIntensity = isHead ? 15 : Math.max(0, 10 - index);
+            const scale = isHead ? 0.95 : 0.8;
+            
             return (
               <div
                 key={`${segment.x}-${segment.y}-${index}`}
-                className={`absolute ${isHead ? 'bg-magenta-vhs z-10' : 'bg-cyan-vhs opacity-80'} transition-none`}
+                className={`absolute z-10`}
                 style={{
                   left: `${(segment.x / GRID_SIZE) * 100}%`,
                   top: `${(segment.y / GRID_SIZE) * 100}%`,
                   width: `calc(100% / ${GRID_SIZE})`,
                   height: `calc(100% / ${GRID_SIZE})`,
-                  boxShadow: isHead ? '0 0 10px #FF00FF' : 'none',
+                  backgroundColor: isHead ? 'var(--color-magenta-vhs)' : 'var(--color-cyan-vhs)',
+                  boxShadow: isHead 
+                    ? `0 0 ${glowIntensity}px var(--color-magenta-vhs), inset 0 0 4px white` 
+                    : `0 0 ${glowIntensity}px var(--color-cyan-vhs)`,
+                  opacity: opacity,
+                  transform: `scale(${scale})`,
+                  transition: 'background-color 0.1s, transform 0.1s',
                 }}
               />
             );
@@ -210,13 +221,17 @@ export function SnakeGame() {
 
           {/* Render Food */}
           <div
-            className={`absolute z-0 ${isEating ? 'bg-white' : 'bg-magenta-vhs'}`}
+            className="absolute z-0"
             style={{
               left: `${(food.x / GRID_SIZE) * 100}%`,
               top: `${(food.y / GRID_SIZE) * 100}%`,
               width: `calc(100% / ${GRID_SIZE})`,
               height: `calc(100% / ${GRID_SIZE})`,
-              animation: 'tear 0.5s infinite steps(2)',
+              backgroundColor: isEating ? 'white' : 'var(--color-magenta-vhs)',
+              animation: isEating ? 'flash-food 0.2s ease-out' : 'tear 0.8s infinite steps(2)',
+              boxShadow: isEating ? '0 0 20px white' : '0 0 8px var(--color-magenta-vhs)',
+              transform: isEating ? 'scale(1.2)' : 'scale(0.7)',
+              transition: 'all 0.1s ease-out',
             }}
           />
         </div>
