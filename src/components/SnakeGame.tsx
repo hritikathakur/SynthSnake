@@ -2,13 +2,19 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const GRID_SIZE = 20;
 type Point = { x: number; y: number };
+type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
-const INITIAL_SNAKE: Point[] = [
-  { x: 10, y: 10 },
-  { x: 10, y: 11 },
-  { x: 10, y: 12 },
-];
 const INITIAL_DIRECTION: Point = { x: 0, y: -1 };
+
+const DIFFICULTY_SETTINGS = {
+  EASY: { speedBase: 220, speedMultiplier: 1.0, minSpeed: 100, initialLength: 3, label: 'EASY' },
+  MEDIUM: { speedBase: 150, speedMultiplier: 1.5, minSpeed: 60, initialLength: 5, label: 'MEDIUM' },
+  HARD: { speedBase: 100, speedMultiplier: 2.5, minSpeed: 40, initialLength: 8, label: 'HARD' },
+};
+
+const getInitialSnake = (length: number): Point[] => {
+  return Array.from({ length }).map((_, i) => ({ x: 10, y: 10 + i }));
+};
 
 const randomPoint = (): Point => ({
   x: Math.floor(Math.random() * GRID_SIZE),
@@ -18,7 +24,8 @@ const randomPoint = (): Point => ({
 const isCollision = (p1: Point, p2: Point) => p1.x === p2.x && p1.y === p2.y;
 
 export function SnakeGame() {
-  const [snake, setSnake] = useState<Point[]>(INITIAL_SNAKE);
+  const [difficulty, setDifficulty] = useState<Difficulty>('MEDIUM');
+  const [snake, setSnake] = useState<Point[]>(getInitialSnake(DIFFICULTY_SETTINGS['MEDIUM'].initialLength));
   const [direction, setDirection] = useState<Point>(INITIAL_DIRECTION);
   const [food, setFood] = useState<Point>({ x: 5, y: 5 });
   const [gameOver, setGameOver] = useState<boolean>(false);
@@ -36,7 +43,8 @@ export function SnakeGame() {
   }, [direction]);
 
   const resetGame = () => {
-    setSnake(INITIAL_SNAKE);
+    const initialSnake = getInitialSnake(DIFFICULTY_SETTINGS[difficulty].initialLength);
+    setSnake(initialSnake);
     setDirection(INITIAL_DIRECTION);
     directionRef.current = INITIAL_DIRECTION;
     directionRefQueue.current = [];
@@ -45,7 +53,7 @@ export function SnakeGame() {
     setGameWon(false);
     setIsStarted(true);
     setIsEating(false);
-    spawnFood(INITIAL_SNAKE);
+    spawnFood(initialSnake);
   };
 
   const spawnFood = (currentSnake: Point[]) => {
@@ -147,18 +155,18 @@ export function SnakeGame() {
         }
         return newSnake;
       });
-    }, Math.max(60, 150 - score * 1.5));
+    }, Math.max(DIFFICULTY_SETTINGS[difficulty].minSpeed, DIFFICULTY_SETTINGS[difficulty].speedBase - score * DIFFICULTY_SETTINGS[difficulty].speedMultiplier));
 
     return () => clearInterval(interval);
-  }, [gameOver, isStarted, food, gameWon, score]);
+  }, [gameOver, isStarted, food, gameWon, score, difficulty]);
 
   return (
     <div className="flex flex-col items-center w-full select-none max-w-[420px]">
       {/* HUD components */}
       <div className="w-full flex justify-between items-end mb-4 font-terminal border-b-[3px] border-cyan-vhs/30 pb-2">
         <div className="flex flex-col">
-          <span className="text-magenta-vhs text-xl">{'>'} ALLOCATE_MEM</span>
-          <span className="text-sm opacity-50">BLOCKS // MAX: 400</span>
+          <span className="text-magenta-vhs text-xl">{'>'} SCORE COUNTER</span>
+          <span className="text-sm opacity-50">TARGET: 400</span>
         </div>
         <span className="font-pixel text-3xl text-cyan-vhs bg-cyan-vhs/10 px-2 py-1 border border-cyan-vhs">
           {score.toString().padStart(3, '0')}
@@ -218,31 +226,48 @@ export function SnakeGame() {
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90">
             {!isStarted ? (
               <div className="text-center group flex flex-col items-center">
-                <button onClick={resetGame} className="raw-btn text-2xl px-8 py-4 glitch-text" data-text="[ EXECUTE_BIN ]">
-                  [ EXECUTE_BIN ]
+                <button onClick={resetGame} className="raw-btn text-2xl px-8 py-4 glitch-text mb-6" data-text="[ START GAME ]">
+                  [ START GAME ]
                 </button>
-                <p className="mt-8 text-sm font-terminal text-cyan-vhs opacity-70 border border-cyan-vhs px-2 border-dashed">
-                  INPUT: WASD // ARROWS // SWIPE
+                
+                <div className="flex gap-4 mb-8">
+                  {(Object.keys(DIFFICULTY_SETTINGS) as Difficulty[]).map((level) => (
+                    <button
+                      key={level}
+                      onClick={() => setDifficulty(level)}
+                      className={`font-pixel text-sm px-3 py-1 border transition-none ${
+                        difficulty === level 
+                          ? 'bg-cyan-vhs text-black border-cyan-vhs' 
+                          : 'bg-black text-cyan-vhs border-cyan-vhs/50 hover:border-cyan-vhs'
+                      }`}
+                    >
+                      {DIFFICULTY_SETTINGS[level].label}
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-sm font-terminal text-cyan-vhs opacity-70 border border-cyan-vhs px-2 border-dashed inline-block">
+                  CONTROLS: WASD // ARROWS // SWIPE
                 </p>
               </div>
             ) : gameOver ? (
               <div className="text-center flex flex-col items-center border-[3px] border-magenta-vhs p-6 bg-black relative">
-                <h2 className="text-2xl font-pixel mb-4 text-magenta-vhs glitch-text" data-text="> FATAL_ERR">{'>'} FATAL_ERR</h2>
+                <h2 className="text-2xl font-pixel mb-4 text-magenta-vhs glitch-text" data-text="> GAME OVER">{'>'} GAME OVER</h2>
                 <div className="w-full h-px bg-magenta-vhs mb-4"></div>
-                <p className="text-cyan-vhs font-terminal text-xl mb-2">CODE: 0x00_COLLISION</p>
-                <p className="text-cyan-vhs font-terminal text-xl mb-8">DUMP: {score} BYTES</p>
+                <p className="text-cyan-vhs font-terminal text-xl mb-2">CRASH DETECTED</p>
+                <p className="text-cyan-vhs font-terminal text-xl mb-8">FINAL SCORE: {score}</p>
                 <button onClick={resetGame} className="raw-btn">
-                  [ SYS_REBOOT ]
+                  [ TRY AGAIN ]
                 </button>
                 <div className="absolute -top-[3px] -left-[3px] w-4 h-4 border-t-[3px] border-l-[3px] border-white"></div>
                 <div className="absolute -bottom-[3px] -right-[3px] w-4 h-4 border-b-[3px] border-r-[3px] border-white"></div>
               </div>
             ) : (
               <div className="text-center flex flex-col items-center border-[3px] border-cyan-vhs p-6 bg-black">
-                <h2 className="text-2xl font-pixel mb-4 text-cyan-vhs glitch-text" data-text="> EXEC_OK">{'>'} EXEC_OK</h2>
-                <p className="text-magenta-vhs font-terminal text-xl mb-8">BUFFER: MAXIMUM OVERLOAD</p>
+                <h2 className="text-2xl font-pixel mb-4 text-cyan-vhs glitch-text" data-text="> YOU WIN">{'>'} YOU WIN</h2>
+                <p className="text-magenta-vhs font-terminal text-xl mb-8">MAXIMUM SCORE REACHED</p>
                 <button onClick={resetGame} className="raw-btn">
-                  [ RESTART_SEQ ]
+                  [ PLAY AGAIN ]
                 </button>
               </div>
             )}

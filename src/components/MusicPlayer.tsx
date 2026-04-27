@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const TRACKS = [
-  { id: 1, title: 'Cybernetic_Echoes.wav', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-  { id: 2, title: 'Neon_Grid_Runner.wav', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-  { id: 3, title: 'Digital_Odyssey.wav', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }
+  { id: 1, title: 'Cybernetic Echoes', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+  { id: 2, title: 'Neon Grid Runner', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+  { id: 3, title: 'Digital Odyssey', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }
 ];
 
 export function MusicPlayer() {
@@ -18,7 +18,7 @@ export function MusicPlayer() {
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio(currentTrack.url);
-    } else {
+    } else if (audioRef.current.src !== currentTrack.url) {
       audioRef.current.src = currentTrack.url;
     }
     
@@ -26,11 +26,21 @@ export function MusicPlayer() {
     audio.volume = isMuted ? 0 : 0.4;
     
     if (isPlaying) {
-      audio.play().catch(e => console.error("Audio playback prevented:", e));
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          if (e.name !== 'AbortError') {
+             console.error("Audio playback error:", e);
+             setIsPlaying(false);
+          }
+        });
+      }
+    } else {
+      audio.pause();
     }
 
     const handleTimeUpdate = () => {
-      setProgress((audio.currentTime / audio.duration) * 100 || 0);
+      setProgress((audio.currentTime / (audio.duration || 1)) * 100 || 0);
     };
 
     const handleEnded = () => handleNext();
@@ -42,7 +52,7 @@ export function MusicPlayer() {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [currentTrackIndex]);
+  }, [currentTrackIndex, isPlaying]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -51,13 +61,7 @@ export function MusicPlayer() {
   }, [isMuted]);
 
   const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(console.error);
-    }
+    setIsPlaying(!isPlaying);
   };
 
   const handleNext = useCallback(() => {
@@ -85,14 +89,14 @@ export function MusicPlayer() {
     <div className="w-full max-w-[420px] mx-auto p-4 bg-black border-2 border-cyan-vhs shadow-[4px_4px_0_#FF00FF]">
       <div className="flex items-center justify-between mb-4 font-terminal border-b border-dashed border-cyan-vhs/50 pb-2">
         <div className="flex flex-col">
-          <span className="text-magenta-vhs text-lg uppercase">{'>'} AUDIO_STREAM</span>
-          <span className="text-cyan-vhs/80 text-sm">SOURCE // AI_GEN_0{currentTrack.id}</span>
+          <span className="text-magenta-vhs text-lg uppercase">{'>'} NOW PLAYING</span>
+          <span className="text-cyan-vhs/80 text-sm">TRACK // 0{currentTrack.id}</span>
         </div>
         <button 
           onClick={() => setIsMuted(!isMuted)} 
           className="text-cyan-vhs hover:text-white bg-black border border-cyan-vhs px-2 py-1 text-sm font-pixel"
         >
-          {isMuted ? '[MUTED]' : '[ SND ]'}
+          {isMuted ? '[ MUTED ]' : '[ AUDIO ]'}
         </button>
       </div>
 

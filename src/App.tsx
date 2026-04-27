@@ -13,12 +13,12 @@ export default function App() {
         {/* Boot Sequence Header */}
         <header className="w-full flex justify-center mt-2">
           <div className="text-center w-full max-w-[600px] border-b-2 border-magenta-vhs/50 pb-4 relative">
-            <h1 className="text-4xl sm:text-6xl screen-tear text-magenta-vhs font-pixel glitch-text tracking-[0.2em]" data-text="O.R.O.B.O.R.O.S.">
-              O.R.O.B.O.R.O.S.
+            <h1 className="text-4xl sm:text-6xl screen-tear text-magenta-vhs font-pixel glitch-text tracking-[0.2em]" data-text="NEON SNAKE">
+              NEON SNAKE
             </h1>
             <div className="font-terminal text-lg sm:text-xl mt-4 flex justify-between w-full text-cyan-vhs">
-              <span className="opacity-80">{'>'} SYS.STATUS: ONLINE</span>
-              <span className="opacity-80">TERMINAL // 0X1A</span>
+              <span className="opacity-80">{'>'} SYSTEM ONLINE</span>
+              <span className="opacity-80">VERSION 1.0</span>
             </div>
             {/* Accents */}
             <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-vhs" />
